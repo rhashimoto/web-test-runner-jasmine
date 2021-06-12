@@ -5,44 +5,73 @@ import {
   sessionFailed,
 } from '@web/test-runner-core/browser/session.js';
 
+async function runJasmineTests(url) {
+  const runJasmine = prepareJasmine();
+
+  const events = new Promise(resolve => {
+    const events = [];
+    const reporter = {};
+    [ "jasmineStarted", "jasmineDone",
+      "suiteStarted",   "suiteDone",
+      "specStarted",    "specDone" ].forEach(function(type) {
+        reporter[type] = function(data) {
+          events.push({ type, data });
+          if (type === 'jasmineDone') resolve(events);
+        };
+      });
+    jasmine.getEnv().addReporter(reporter);
+  });
+  await import(url);
+  runJasmine();
+
+  return await events;
+}
+
 (async () => {
   try {
     sessionStarted();
 
     const { testFile, testFrameworkConfig } = await getConfig();
+    const events = await runJasmineTests(new URL(testFile, document.baseURI).href);
 
-    const runJasmine = bootJasmine();
-    const reporter = {
-      jasmineStarted: (data) => console.log('jasmineStarted', data),
-      jasmineDone: (data) => console.log('jasmineDone', data),
-      suiteStarted: (data) => console.log('suiteStarted', data),
-      suiteDone: (data) => console.log('suiteDone', data),
-      specStarted: (data) => console.log('specStarted', data),
-      specDone: (data) => console.log('specDone', data),
+    let suite = { suites: [], tests: [] };
+    const suiteStack = [suite];
+    for (const event of events) {
+      switch (event.type) {
+        case 'suiteStarted':
+          const suite = {
+            name: event.data.description,
+            suites: [],
+            tests: []
+          };
+          suiteStack[suiteStack.length - 1].suites.push(suite);
+          suiteStack.push(suite);
+          break;
+        case 'suiteDone':
+          suiteStack.pop();
+          break;
+        case 'specDone':
+          suiteStack[suiteStack.length - 1].tests.push({
+            name: event.data.description,
+            passed: event.data.status === 'passed',
+            skipped: event.data.status === 'excluded',
+            error: event.data.failedExpectations[0]
+          });
+          break;
+        default:
+          break;
+      }
     }
-    jasmine.getEnv().addReporter(reporter);
-    
-    await import(new URL(testFile, document.baseURI).href);
-    runJasmine();
-
-    const testResults = {
-      name: 'MyTestSuite',
-      suites: [],
-      tests: [{
-        name: 'fake-test',
-        passed: true,
-        skipped: false
-      }]
-    };
 
     function didSuitePass(suite) {
       return suite.tests.every(test => test.passed) &&
              suite.suites.every(didSuitePass);
     }
 
+    console.log(suiteStack[0]);
     sessionFinished({
-      passed: didSuitePass(testResults),
-      testResults,
+      passed: didSuitePass(suiteStack[0]),
+      testResults: suiteStack[0],
     });
   } catch (error) {
     sessionFailed(error);
@@ -50,7 +79,7 @@ import {
   }
 })();
 
-function bootJasmine() {
+function prepareJasmine() {
   var jasmineRequire = window.jasmineRequire || require('./jasmine.js');
 
   /**
