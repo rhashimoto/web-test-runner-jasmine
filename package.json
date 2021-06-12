@@ -1,0 +1,7 @@
+{
+  "name": "test-runner-expect",
+  "type": "module",
+  "devDependencies": {
+    "@web/test-runner": "^0.13.10"
+  }
+}
