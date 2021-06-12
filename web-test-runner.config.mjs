@@ -1,8 +1,6 @@
 export default {
-  debug: true,
   files: ['test/*.test.js'],
   nodeResolve: true,
-  watch: true,
   testFramework: {
     path: 'framework.js'
   },
