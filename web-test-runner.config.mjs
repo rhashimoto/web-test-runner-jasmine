@@ -1,8 +1,9 @@
 export default {
   files: ['test/*.test.js'],
   nodeResolve: true,
+  
   testFramework: {
-    path: 'framework.js'
+    path: 'jasmine-framework.js'
   },
   testRunnerHtml: testFramework => `
     <!DOCTYPE html>

@@ -12,8 +12,7 @@ import {
     const { testFile, testFrameworkConfig } = await getConfig();
     const events = await runJasmineTests(new URL(testFile, document.baseURI).href);
 
-    let suite = { suites: [], tests: [] };
-    const suiteStack = [suite];
+    const suiteStack = [{ suites: [], tests: [] }];
     for (const event of events) {
       switch (event.type) {
         case 'suiteStarted':
@@ -57,17 +56,10 @@ import {
 })();
 
 async function runJasmineTests(url) {
-  const jasmineRequire = window.jasmineRequire;
-  const jasmine = jasmineRequire.core(jasmineRequire);
-  const global = jasmine.getGlobal();
+  // Initialize Jasmine.
+  bootJasmine();
 
-  jasmineRequire.html(jasmine);
-
-  const env = jasmine.getEnv();
-  var jasmineInterface = jasmineRequire.interface(jasmine, env);
-  Object.assign(global, jasmineInterface);
-
-  // Collect Jasmine events.
+  // Prepare to collect Jasmine events.
   const events = new Promise(resolve => {
     const events = [];
     const reporter = {};
@@ -82,27 +74,78 @@ async function runJasmineTests(url) {
     jasmine.getEnv().addReporter(reporter);
   });
 
-  // Import the test code.
+  // Load the test code.
   await import(url);
 
-  const queryString = new jasmine.QueryString({
+  // Trigger Jasmine execution.
+  dispatchEvent(new Event('jasmine-run'));
+
+  return await events;
+}
+
+// The contents of this function are copied from standalone Jasmine boot.js,
+// and modified to change the triggering event. Normally the trigger is
+// the Window "load" event but we use dynamic import to load the spec file
+// so execution needs to be delayed until that is ready.
+function bootJasmine() {
+  var jasmineRequire = window.jasmineRequire || require('./jasmine.js');
+
+  /**
+   * ## Require &amp; Instantiate
+   *
+   * Require Jasmine's core files. Specifically, this requires and attaches all of Jasmine's code to the `jasmine` reference.
+   */
+  var jasmine = jasmineRequire.core(jasmineRequire),
+    global = jasmine.getGlobal();
+  global.jasmine = jasmine;
+
+  /**
+   * Since this is being run in a browser and the results should populate to an HTML page, require the HTML-specific Jasmine code, injecting the same reference.
+   */
+  jasmineRequire.html(jasmine);
+
+  /**
+   * Create the Jasmine environment. This is used to run all specs in a project.
+   */
+  var env = jasmine.getEnv();
+
+  /**
+   * ## The Global Interface
+   *
+   * Build up the functions that will be exposed as the Jasmine public interface. A project can customize, rename or alias any of these functions as desired, provided the implementation remains unchanged.
+   */
+  var jasmineInterface = jasmineRequire.interface(jasmine, env);
+
+  /**
+   * Add all of the Jasmine global/public interface to the global scope, so a project can use the public interface directly. For example, calling `describe` in specs instead of `jasmine.getEnv().describe`.
+   */
+  extend(global, jasmineInterface);
+
+  /**
+   * ## Runner Parameters
+   *
+   * More browser specific code - wrap the query string in an object and to allow for getting/setting parameters from the runner user interface.
+   */
+
+  var queryString = new jasmine.QueryString({
     getWindowLocation: function() { return window.location; }
   });
 
-  const filterSpecs = !!queryString.getParam("spec");
+  var filterSpecs = !!queryString.getParam("spec");
 
-  const config = {
+  var config = {
     failFast: queryString.getParam("failFast"),
     oneFailurePerSpec: queryString.getParam("oneFailurePerSpec"),
     hideDisabled: queryString.getParam("hideDisabled")
   };
 
-  const random = queryString.getParam("random");
+  var random = queryString.getParam("random");
+
   if (random !== undefined && random !== "") {
     config.random = random;
   }
 
-  const seed = queryString.getParam("seed");
+  var seed = queryString.getParam("seed");
   if (seed) {
     config.seed = seed;
   }
@@ -111,16 +154,21 @@ async function runJasmineTests(url) {
    * ## Reporters
    * The `HtmlReporter` builds all of the HTML UI for the runner page. This reporter paints the dots, stars, and x's for specs, as well as all spec names and all failures (if any).
    */
-  const htmlReporter = new jasmine.HtmlReporter({
-    env,
+  var htmlReporter = new jasmine.HtmlReporter({
+    env: env,
     navigateWithNewParam: function(key, value) { return queryString.navigateWithNewParam(key, value); },
     addToExistingQueryString: function(key, value) { return queryString.fullStringWithNewParam(key, value); },
     getContainer: function() { return document.body; },
     createElement: function() { return document.createElement.apply(document, arguments); },
     createTextNode: function() { return document.createTextNode.apply(document, arguments); },
     timer: new jasmine.Timer(),
-    filterSpecs
+    filterSpecs: filterSpecs
   });
+
+  /**
+   * The `jsApiReporter` also receives spec results, and is used by any environment that needs to extract the results  from JavaScript.
+   */
+  env.addReporter(jasmineInterface.jsApiReporter);
   env.addReporter(htmlReporter);
 
   /**
@@ -147,8 +195,18 @@ async function runJasmineTests(url) {
   /**
    * ## Execution
    */
-  htmlReporter.initialize();
-  env.execute();
+  // Begin change to Jasmine standalone boot.js.
+  window.addEventListener('jasmine-run', function() {
+    htmlReporter.initialize();
+    env.execute();
+  });
+  // End change to Jasmine standalone boot.js.
 
-  return await events;
+  /**
+   * Helper function for readability above.
+   */
+  function extend(destination, source) {
+    for (var property in source) destination[property] = source[property];
+    return destination;
+  }
 }
