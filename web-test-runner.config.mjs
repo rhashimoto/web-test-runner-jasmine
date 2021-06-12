@@ -11,7 +11,6 @@ export default {
     
     <script type="text/javascript" src="jasmine-standalone/lib/jasmine-3.7.1/jasmine.js"></script>
     <script type="text/javascript" src="jasmine-standalone/lib/jasmine-3.7.1/jasmine-html.js"></script>
-    <script type="text/javascript" src="jasmine-standalone/lib/jasmine-3.7.1/boot.js"></script>    
 
     <script type="module" src="${testFramework}"></script>
   `.split('\n').map(line => line.trim()).filter(line => line).join('\n')
