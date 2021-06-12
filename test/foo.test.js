@@ -1,5 +1,6 @@
 describe('foo', function() {
   it('tests something', async function() {
-    console.log('hello');
+    expect(true).toBeTruthy();
+    expect(false).toBeTruthy();
   });
 });

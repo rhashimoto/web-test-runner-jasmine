@@ -2,6 +2,13 @@
   "name": "test-runner-expect",
   "type": "module",
   "devDependencies": {
-    "@web/test-runner": "^0.13.10"
+    "@web/test-runner": "^0.13.10",
+    "@web/test-runner-core": "^0.10.17",
+    "@web/test-runner-puppeteer": "^0.10.0"
+  },
+  "dependenciesMeta": {
+    "@web/test-runner-core@0.10.17": {
+      "unplugged": true
+    }
   }
 }
