@@ -10,7 +10,9 @@ import {
     sessionStarted();
 
     const { testFile, testFrameworkConfig } = await getConfig();
-    const events = await runJasmineTests(new URL(testFile, document.baseURI).href);
+    const events = await runJasmineTests(
+      testFrameworkConfig,
+      new URL(testFile, document.baseURI).href);
 
     const suiteStack = [{ suites: [], tests: [] }];
     for (const event of events) {
@@ -41,7 +43,7 @@ import {
     }
 
     function didSuitePass(suite) {
-      return suite.tests.every(test => test.passed) &&
+      return suite.tests.every(test => test.passed || test.skipped) &&
              suite.suites.every(didSuitePass);
     }
 
@@ -55,8 +57,33 @@ import {
   }
 })();
 
-async function runJasmineTests(url) {
-  // Initialize Jasmine.
+async function runJasmineTests(config, url) {
+  // Load Jasmine standalone assets.
+  const html = new DOMParser().parseFromString(`
+    <link rel="shortcut icon" type="image/png" href="${config.standalone}/jasmine_favicon.png">
+    <link rel="stylesheet" type="text/css" href="${config.standalone}/jasmine.css">
+    
+    <script type="text/javascript" src="${config.standalone}/jasmine.js"></script>
+    <script type="text/javascript" src="${config.standalone}/jasmine-html.js"></script>
+  `, 'text/html');
+
+  for (const element of html.querySelectorAll('link, script')) {
+    if (element.tagName.match(/^script$/i)) {
+      // Script elements created by DOMParser are not executable so
+      // add a copy to the document.
+      const script = document.createElement('script');
+      script.type = element.type;
+      script.src = element.src;
+      document.head.appendChild(script);
+      await new Promise(resolve => script.onload = resolve);
+    } else {
+      document.head.appendChild(element);
+    }
+  }
+
+  // Use our own boot function instead of the boot file because
+  // everything is dynamically loaded and the standard boot file
+  // expects static loading.
   bootJasmine();
 
   // Prepare to collect Jasmine events.
@@ -87,6 +114,9 @@ async function runJasmineTests(url) {
 // and modified to change the triggering event. Normally the trigger is
 // the Window "load" event but we use dynamic import to load the spec file
 // so execution needs to be delayed until that is ready.
+//
+// The original contents are derived from Jasmine 3.7.1. This may need
+// updating for use with other Jasmine versions.
 function bootJasmine() {
   var jasmineRequire = window.jasmineRequire || require('./jasmine.js');
 
@@ -192,15 +222,14 @@ function bootJasmine() {
   window.clearTimeout = window.clearTimeout;
   window.clearInterval = window.clearInterval;
 
-  /**
-   * ## Execution
-   */
-  // Begin change to Jasmine standalone boot.js.
+  /*************************************************************************/
+  /* CUSTOMIZATION TO STANDARD BOOT CODE                                   */
+  /*************************************************************************/
   window.addEventListener('jasmine-run', function() {
     htmlReporter.initialize();
     env.execute();
   });
-  // End change to Jasmine standalone boot.js.
+  /*************************************************************************/
 
   /**
    * Helper function for readability above.
