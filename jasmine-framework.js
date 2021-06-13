@@ -67,6 +67,7 @@ async function runJasmineTests(config, url) {
     <script type="text/javascript" src="${config.standalone}/jasmine-html.js"></script>
   `, 'text/html');
 
+  const scriptLoad = [];
   for (const element of html.querySelectorAll('link, script')) {
     if (element.tagName.match(/^script$/i)) {
       // Script elements created by DOMParser are not executable so
@@ -74,12 +75,14 @@ async function runJasmineTests(config, url) {
       const script = document.createElement('script');
       script.type = element.type;
       script.src = element.src;
+      script.async = false;
+      scriptLoad.push(new Promise(resolve => script.onload = resolve));
       document.head.appendChild(script);
-      await new Promise(resolve => script.onload = resolve);
     } else {
       document.head.appendChild(element);
     }
   }
+  await Promise.all(scriptLoad);
 
   // Use our own boot function instead of the boot file because
   // everything is dynamically loaded and the standard boot file
