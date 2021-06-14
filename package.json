@@ -1,6 +1,7 @@
 {
-  "name": "test-runner-expect",
+  "name": "web-test-runner-jasmine",
   "type": "module",
+  "main": "index.js",
   "devDependencies": {
     "@web/test-runner": "^0.13.10",
     "@web/test-runner-core": "^0.10.17",

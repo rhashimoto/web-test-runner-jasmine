@@ -3105,19 +3105,6 @@ resolve@^1.19.0:
   languageName: node
   linkType: hard
 
-"test-runner-expect@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "test-runner-expect@workspace:."
-  dependencies:
-    "@web/test-runner": ^0.13.10
-    "@web/test-runner-core": ^0.10.17
-    "@web/test-runner-puppeteer": ^0.10.0
-  dependenciesMeta:
-    "@web/test-runner-core@0.10.17":
-      unplugged: true
-  languageName: unknown
-  linkType: soft
-
 "through@npm:^2.3.8":
   version: 2.3.8
   resolution: "through@npm:2.3.8"
@@ -3256,6 +3243,19 @@ resolve@^1.19.0:
   checksum: 591f059f727ac1ba0d97cb7767f8583a03fcbb07db7be2b7dce838ede520ec0e958a41cb19077054769077fdc49a9b9a2dc391c83426bfee89c054b8cc7404bf
   languageName: node
   linkType: hard
+
+"web-test-runner-jasmine@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "web-test-runner-jasmine@workspace:."
+  dependencies:
+    "@web/test-runner": ^0.13.10
+    "@web/test-runner-core": ^0.10.17
+    "@web/test-runner-puppeteer": ^0.10.0
+  dependenciesMeta:
+    "@web/test-runner-core@0.10.17":
+      unplugged: true
+  languageName: unknown
+  linkType: soft
 
 "webidl-conversions@npm:^6.1.0":
   version: 6.1.0
