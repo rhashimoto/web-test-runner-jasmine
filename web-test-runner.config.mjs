@@ -1,11 +1,18 @@
+import path from 'path';
+import { createRequire } from 'module';
+
+// Get relative path to framework module.
+const require = createRequire(import.meta.url);
+const frameworkPath = path.dirname(path.relative('.', require.resolve('test-runner-expect/package.json')));
+
 export default {
   files: ['test/*.test.js'],
   nodeResolve: true,
 
   testFramework: {
-    path: 'jasmine-framework.js',
+    path: `${frameworkPath}/jasmine-framework.js`,
     config: {
-      standalone: 'jasmine-standalone/lib/jasmine-3.7.1'
+      standalone: `${frameworkPath}/jasmine-standalone/lib/jasmine-3.7.1`
     }
   }
 }
