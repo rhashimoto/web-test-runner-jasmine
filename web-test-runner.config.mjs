@@ -12,7 +12,7 @@ export default {
   testFramework: {
     path: `${frameworkPath}/jasmine-framework.js`,
     config: {
-      standalone: `${frameworkPath}/jasmine-standalone/lib/jasmine-3.7.1`
+      standalone: `${frameworkPath}/jasmine-standalone/lib/current`
     }
   }
 }
