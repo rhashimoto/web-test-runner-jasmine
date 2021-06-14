@@ -4,8 +4,7 @@
   "main": "index.js",
   "devDependencies": {
     "@web/test-runner": "^0.13.10",
-    "@web/test-runner-core": "^0.10.17",
-    "@web/test-runner-puppeteer": "^0.10.0"
+    "@web/test-runner-core": "^0.10.17"
   },
   "dependenciesMeta": {
     "@web/test-runner-core@0.10.17": {
