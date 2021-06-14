@@ -1,14 +1,19 @@
 import path from 'path';
 import { createRequire } from 'module';
 
-// Get relative path to framework module.
 const require = createRequire(import.meta.url);
-const frameworkPath =
-  path.dirname(path.relative('.', require.resolve('web-test-runner-jasmine/package.json')));
+const modulePath =
+  path.dirname(require.resolve('web-test-runner-jasmine/package.json'));
 
-export default {
-  path: `${frameworkPath}/jasmine-framework.js`,
-  config: {
-    standalone: `${frameworkPath}/jasmine-standalone/lib/current`
-  }  
-};
+function makePath(root, filename) {
+  return path.relative(root, path.resolve(modulePath, filename));
+}
+
+export default function(serverRoot = process.cwd()) {
+  return {
+    path: makePath(process.cwd(), 'jasmine-framework.js'),
+    config: {
+      standalone: makePath(serverRoot, 'jasmine-standalone/lib/current')
+    }  
+  };
+}
