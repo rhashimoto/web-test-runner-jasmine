@@ -1,6 +1,9 @@
-const path = require('path');
+import { createRequire } from 'module';
+import path from 'path'
 
-module.exports = {
+const require = createRequire(import.meta.url);
+
+export default {
   files: ['test/*.test.js', 'test/*.test.html'],
   nodeResolve: true,
 
