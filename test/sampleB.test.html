@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<script type="module">
+  import runTests from 'web-test-runner-jasmine/runTests.js';
+  runTests(() => {
+    describe('html test', () => {
+      it('should run a test', () => {
+        expect('foo').toBe('bar');
+      });
+    });
+  });
+</script>
