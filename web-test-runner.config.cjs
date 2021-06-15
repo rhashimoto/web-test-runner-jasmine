@@ -1,8 +1,10 @@
-const getJasmineFramework = require('web-test-runner-jasmine');
+const path = require('path');
 
 module.exports = {
   files: ['test/*.test.js', 'test/*.test.html'],
   nodeResolve: true,
 
-  testFramework: getJasmineFramework('.')
+  testFramework: {
+    path: path.relative('.', require.resolve('web-test-runner-jasmine'))
+  }
 }

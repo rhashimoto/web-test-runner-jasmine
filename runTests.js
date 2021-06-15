@@ -7,6 +7,8 @@ import {
 const JASMINE_VERSION = '3.7.1';
 const STANDALONE_PATH = new URL(`./jasmine-standalone/lib/jasmine-${JASMINE_VERSION}`, import.meta.url).href;
 
+let bootFunction;
+
 /**
  * @param {() => Promise<void>|void} specs 
  * @param {object} config?
@@ -57,6 +59,7 @@ async function prepareJasmine() {
   } else {
     await new Promise(resolve => setTimeout(resolve));
   }
+  window.onload = null;
 
   // Boot Jasmine.
   const bootScript = document.createElement('script');
@@ -64,6 +67,7 @@ async function prepareJasmine() {
   bootScript.async = false;
   document.head.appendChild(bootScript);
   await new Promise(resolve => bootScript.onload = resolve)
+  bootFunction = window.onload;
 }
 
 /**
@@ -89,14 +93,7 @@ async function getJasmineEvents(specs, config) {
     jasmine.getEnv().addReporter(reporter);
   });
 
-  // Jasmine standalone tests are ordinarily loaded statically in an HTML
-  // page and so are executed with the Window "load" event. We load both
-  // Jasmine and the test dynamically so we need to invoke the event
-  // handler explicitly. This is a hack as any real load event handlers
-  // could be called twice, but we can control the page content if
-  // necessary and it's somewhat better than the alternative of writing
-  // our own boot script.
-  window.dispatchEvent(new Event('load'));
+  bootFunction();
   return events;
 }
 
