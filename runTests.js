@@ -99,11 +99,11 @@ async function getJasmineEvents(specs, config) {
 
 function convertEventsToResults(events) {
   const suiteStack = [{ suites: [], tests: [] }];
-  for (const event of events) {
-    switch (event.type) {
+  for (const { type, data } of events) {
+    switch (type) {
       case 'suiteStarted':
         const suite = {
-          name: event.data.description,
+          name: data.description,
           suites: [],
           tests: []
         };
@@ -115,10 +115,10 @@ function convertEventsToResults(events) {
         break;
       case 'specDone':
         suiteStack[suiteStack.length - 1].tests.push({
-          name: event.data.description,
-          passed: event.data.status === 'passed',
-          skipped: event.data.status === 'excluded',
-          error: event.data.failedExpectations[0]
+          name: data.description,
+          passed: data.status === 'passed',
+          skipped: data.status === 'excluded',
+          error: summarizeErrors(data.failedExpectations)
         });
         break;
       default:
@@ -135,4 +135,15 @@ function convertEventsToResults(events) {
     passed: didSuitePass(suiteStack[0]),
     testResults: suiteStack[0],
   };
+}
+
+function summarizeErrors(errors) {
+  if (!errors?.length) return undefined;
+
+  const summary = {...errors[0]};
+  if (errors.length > 1) {
+    summary.message = `${errors.length} failures (detail shown for 1st error)\n\n`;
+    summary.message += errors[0].message;
+  }
+  return summary;
 }
