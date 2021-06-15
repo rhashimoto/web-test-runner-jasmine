@@ -50,6 +50,15 @@ async function prepareJasmine() {
   }
   await Promise.all(scriptLoad);
 
+  // Wait for the window load event before loading the Jasmine boot script
+  // so test execution is not triggered prematurely.
+  if (document.readyState !== 'complete') {
+    await new Promise(resolve => window.addEventListener('load', resolve, { once: true }));
+  } else {
+    await new Promise(resolve => setTimeout(resolve));
+  }
+
+  // Boot Jasmine.
   const bootScript = document.createElement('script');
   bootScript.src = `${STANDALONE_PATH}/boot.js`;
   bootScript.async = false;
@@ -84,9 +93,9 @@ async function getJasmineEvents(specs, config) {
   // page and so are executed with the Window "load" event. We load both
   // Jasmine and the test dynamically so we need to invoke the event
   // handler explicitly. This is a hack as any real load event handlers
-  // could be called twice, but we can control the page content to ensure
-  // that isn't a problem and it's somewhat better than the alternative
-  // of writing our own boot script.
+  // could be called twice, but we can control the page content if
+  // necessary and it's somewhat better than the alternative of writing
+  // our own boot script.
   window.dispatchEvent(new Event('load'));
   return events;
 }
