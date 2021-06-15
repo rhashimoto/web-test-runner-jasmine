@@ -5,7 +5,8 @@ import {
   sessionFailed,
 } from '@web/test-runner-core/browser/session.js';
 
-const STANDALONE_PATH = new URL('./jasmine-standalone/lib/current', import.meta.url).href;
+const JASMINE_VERSION = '3.7.1';
+const STANDALONE_PATH = new URL(`./jasmine-standalone/lib/jasmine-${JASMINE_VERSION}`, import.meta.url).href;
 
 (async () => {
   try {
