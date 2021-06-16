@@ -28,13 +28,9 @@ Javascript test files should be written as ordinary Jasmine tests in an ES6 modu
   <h1>hello, world</h1>
   <script type="module">
     import runTests from 'web-test-runner-jasmine/runTests.js';
-    runTests(() => {
-      describe('foo', function() {
-        it('tests something', async function() {
-          expect(true).toBeTruthy();
-        });
-      });
-    });
+    runTests(async () => import('my-jasmine-test.js'));
   </script>
 </body>
 ```
+
+Alternatively you can implement tests directly in the HTML file instead of using dynamic import, which would keep everything in one file and be slightly more efficient. The drawback is that if any tests fail, the reported line number won't match the file because the test runner injects its own HTML.
