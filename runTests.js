@@ -7,6 +7,8 @@ import {
 const JASMINE_VERSION = '3.7.1';
 const STANDALONE_PATH = new URL(`./jasmine-standalone/lib/jasmine-${JASMINE_VERSION}`, import.meta.url).href;
 
+const PREPARE_TIMEOUT = 10000;
+
 let bootFunction;
 
 /**
@@ -16,7 +18,12 @@ let bootFunction;
 export default async function(specs, config = {}) {
   try {
     sessionStarted();
-    await prepareJasmine();
+    await Promise.race([
+      prepareJasmine(),
+      new Promise((_, reject) => setTimeout(() => {
+        reject(new Error('Jasmine standalone loading failed'));
+      }, PREPARE_TIMEOUT))
+    ]);
     const events = await getJasmineEvents(specs, config);
     const results = convertEventsToResults(events);
     sessionFinished(results);
@@ -36,7 +43,7 @@ async function prepareJasmine() {
   `, 'text/html');
 
   const scriptLoad = [];
-  for (const element of html.querySelectorAll('link, script')) {
+  Array.from(html.querySelectorAll('link, script')).map(element => {
     if (element.tagName.match(/^script$/i)) {
       // Script elements created by DOMParser are not executable so
       // add a copy to the document.
@@ -45,11 +52,12 @@ async function prepareJasmine() {
       script.src = element.src;
       script.async = false;
       scriptLoad.push(new Promise(resolve => script.onload = resolve));
-      document.head.appendChild(script);
-    } else {
-      document.head.appendChild(element);
+      return script;
     }
-  }
+    return element;
+  }).forEach(element => {
+    document.head.appendChild(element);
+  });
   await Promise.all(scriptLoad);
 
   // Wait for the window load event before loading the Jasmine boot script
@@ -93,6 +101,7 @@ async function getJasmineEvents(specs, config) {
     jasmine.getEnv().addReporter(reporter);
   });
 
+  // Trigger test execution.
   bootFunction();
   return events;
 }
@@ -142,8 +151,11 @@ function summarizeErrors(errors) {
 
   const summary = {...errors[0]};
   if (errors.length > 1) {
-    summary.message = `${errors.length} failures (detail shown for 1st error)\n\n`;
-    summary.message += errors[0].message;
+    errors.forEach((error, i) => {
+      summary.message =
+        (i ? summary.message + '\n' : '') +
+        `(${i + 1}/${errors.length}) ${error.message}`;
+    })
   }
   return summary;
 }
