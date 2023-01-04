@@ -4,7 +4,7 @@ import {
   sessionFailed,
 } from '@web/test-runner-core/browser/session.js';
 
-const JASMINE_VERSION = '3.7.1';
+const JASMINE_VERSION = '4.5.0';
 const STANDALONE_PATH = new URL(`./jasmine-standalone/lib/jasmine-${JASMINE_VERSION}`, import.meta.url).href;
 
 const PREPARE_TIMEOUT = 10000;
@@ -70,11 +70,15 @@ async function prepareJasmine() {
   window.onload = null;
 
   // Boot Jasmine.
-  const bootScript = document.createElement('script');
-  bootScript.src = `${STANDALONE_PATH}/boot.js`;
-  bootScript.async = false;
-  document.head.appendChild(bootScript);
-  await new Promise(resolve => bootScript.onload = resolve)
+  const bootScripts = ['boot0.js', 'boot1.js'].map(name  => {
+    const bootScript = document.createElement('script');
+    bootScript.src = `${STANDALONE_PATH}/${name}`;
+    bootScript.async = false;
+    document.head.appendChild(bootScript);
+    return new Promise(resolve => bootScript.onload = resolve)
+  });
+  await Promise.all(bootScripts);
+
   bootFunction = window.onload;
 }
 
