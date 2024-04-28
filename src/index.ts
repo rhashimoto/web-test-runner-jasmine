@@ -45,6 +45,9 @@ export const jasmineTestRunnerConfig = () => {
               const global = jasmine.getGlobal();
               global.jasmine = jasmine;
               const env = jasmine.getEnv();
+              if (testFramework.config) {
+                env.configure(testFramework.config);
+              }
               Object.assign(window, jasmineRequire.interface(jasmine, env));
               window.onload = function () {};
   
