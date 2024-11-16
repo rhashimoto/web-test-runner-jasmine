@@ -2,9 +2,9 @@
   "name": "web-test-runner-jasmine",
   "version": "0.0.6",
   "description": "Plugin for Jasmine and Web Test Runner",
-  "main": "./index.js",
-  "module": "./index.js",
-  "typings": "./index.d.ts",
+  "main": "./dist/lib/index.js",
+  "module": "./dist/lib/index.js",
+  "typings": "./dist/lib/index.d.ts",
   "type": "module",
   "files": [
     "*"
@@ -14,7 +14,7 @@
     "clean": "del ./dist",
     "test": "web-test-runner --coverage",
     "build": "tsc --project ./tsconfig.lib.json && cpy ./package.json dist/lib/ && cpy ./README.md dist/lib/",
-    "publish": "cd ./dist/lib && npm publish --access public"
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
